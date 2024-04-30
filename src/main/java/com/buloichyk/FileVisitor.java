@@ -1,4 +1,4 @@
-package com.buloichyk.quodanatask;
+package com.buloichyk;
 
 import com.github.javaparser.ast.body.MethodDeclaration;
 import com.github.javaparser.ast.visitor.VoidVisitorAdapter;
@@ -11,7 +11,7 @@ public class FileVisitor extends VoidVisitorAdapter<List<MethodComplexity>> {
         super.visit(md, methodComplexityList);
         System.out.println("Analyzing: " + md.getName());
         MethodVisitor visitor = new MethodVisitor();
-        MethodComplexity methodComplexity = new MethodComplexity(md.hashCode() + md.getName().asString());
+        MethodComplexity methodComplexity = new MethodComplexity(md.getClass().getSimpleName() + "." + md.getName().asString() + "()");
         md.accept(visitor, methodComplexity);
         methodComplexityList.add(methodComplexity);
     }

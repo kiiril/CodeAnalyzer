@@ -1,9 +1,12 @@
-package com.buloichyk.quodanatask;
+package com.buloichyk;
 
 import javafx.application.Application;
+import javafx.collections.FXCollections;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.ListView;
+import javafx.scene.control.TitledPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
@@ -32,6 +35,6 @@ public class Main extends Application {
             stage.setScene(mainSceneController.buildMainScene());
         });
         vBox.getChildren().addAll(label, chooseDirectoryButton);
-        return new Scene(vBox, 600, 600);
+        return new Scene(vBox);
     }
 }

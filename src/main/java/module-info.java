@@ -4,6 +4,6 @@ module com.buloichyk.quodanatask {
     requires com.github.javaparser.symbolsolver.core;
     requires com.github.javaparser.core;
 
-    opens com.buloichyk.quodanatask to javafx.fxml;
-    exports com.buloichyk.quodanatask;
+    opens com.buloichyk to javafx.fxml;
+    exports com.buloichyk;
 }

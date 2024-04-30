@@ -1,4 +1,4 @@
-package com.buloichyk.quodanatask;
+package com.buloichyk;
 
 public class MethodComplexity {
     private String methodName;
