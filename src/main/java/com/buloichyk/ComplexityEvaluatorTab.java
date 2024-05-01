@@ -1,46 +1,24 @@
 package com.buloichyk;
 
-import com.github.javaparser.StaticJavaParser;
-import com.github.javaparser.ast.CompilationUnit;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
 import javafx.geometry.VPos;
-import javafx.scene.Scene;
 import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.*;
-import javafx.scene.layout.*;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Arc;
-import javafx.scene.shape.ArcType;
-import javafx.scene.text.Font;
-import javafx.util.Duration;
+import javafx.scene.layout.GridPane;
 import javafx.util.StringConverter;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-public class MainSceneController {
-    private final List<MethodComplexity> methodComplexityList;
-    private final GridPane gridPane = new GridPane();
-    private Timeline timeline;
-
-    public MainSceneController() {
-        this.methodComplexityList = new ArrayList<>();
-    }
-    public Scene buildMainScene() {
-        TabPane tabPane = new TabPane();
-        Tab complexityEvaluatorTab = new Tab("Complexity Evaluator");
+public class ComplexityEvaluatorTab extends Tab {
+    private final GridPane gridPane;
+    public ComplexityEvaluatorTab() {
+        super("Complexity Evaluator");
+        this.gridPane = new GridPane();
 
         BarChart<Number, String> barChart = makeBarChart();
         GridPane.setConstraints(barChart, 0,0);
@@ -52,78 +30,29 @@ public class MainSceneController {
         GridPane.setValignment(titledPane, VPos.TOP);
         gridPane.getChildren().add(titledPane);
 
-        TableView<MethodComplexity> tableView = makeTable();
+        TableView<MethodComplexity> tableView = makeTableView();
         GridPane.setConstraints(tableView, 1, 1);
         gridPane.getChildren().add(tableView);
 
-        complexityEvaluatorTab.setClosable(false);
-        complexityEvaluatorTab.setContent(gridPane);
-
-
-        Tab styleCheckerTab = new Tab("Style Checker");
-        HBox hBox = new HBox();
-        Pane progressCircle = makeProgressCircle();
-        ListView<String> listView = makeListView();
-
-        progressCircle.prefWidthProperty().bind(hBox.widthProperty().divide(2));
-        listView.prefWidthProperty().bind(hBox.widthProperty().divide(2));
-
-        hBox.getChildren().addAll(progressCircle, listView);
-
-        styleCheckerTab.setContent(hBox);
-        styleCheckerTab.setOnSelectionChanged(event -> {
-            timeline.play();
-        });
-
-        styleCheckerTab.setClosable(false);
-
-        tabPane.getTabs().addAll(complexityEvaluatorTab, styleCheckerTab);
-
-        // allow using css for styling
-        Scene mainScene = new Scene(tabPane);
-        mainScene.getStylesheets().add(getClass().getResource("style.css").toExternalForm());
-        return mainScene;
-    }
-
-    public void analyzeCodeBase(Path directory) {
-        if (Files.isDirectory(directory)) {
-            try (Stream<Path> stream = Files.walk(directory)) {
-                List<Path> files = stream
-                        .filter(file -> file.toString().endsWith(".java"))
-                        .toList();
-                System.out.println(files);
-                for (Path file: files) {
-                    CompilationUnit unit = StaticJavaParser.parse(file);
-                    FileVisitor fileVisitor = new FileVisitor();
-                    fileVisitor.visit(unit, methodComplexityList);
-                }
-            } catch (IOException e) {
-                System.out.println("Exception");
-            }
-        }
+        setContent(gridPane);
+        setClosable(false);
     }
 
     public BarChart<Number, String> makeBarChart() {
         // FIXME differentiate methods with same name
-        methodComplexityList.sort(Comparator.comparingInt(MethodComplexity::getTotalConditionalStatements).reversed());
-        List<MethodComplexity> topList = methodComplexityList.subList(0, 3);
+        List<MethodComplexity> topList = MethodComplexityListProvider.getTop3MostComplexMethods();
         System.out.println(topList);
 
         PieChart worst = makePieChart(topList.get(0));
         GridPane.setConstraints(worst, 1, 0);
         gridPane.getChildren().add(worst);
 
-        CategoryAxis methodNames = new CategoryAxis();
-        methodNames.setCategories(FXCollections.observableArrayList(topList
-                .stream()
-                .map(MethodComplexity::getMethodName)
-                .collect(Collectors.toList())));
+        CategoryAxis yAxis = new CategoryAxis();
+        yAxis.setCategories(FXCollections.observableArrayList(MethodComplexityListProvider.getNamesOfTop3MostComplexMethods()));
 
-
-        NumberAxis conditionalsCount = new NumberAxis();
-        // FIXME make correct ticks
-        conditionalsCount.setTickUnit(1);
-        conditionalsCount.setTickLabelFormatter(new StringConverter<>() {
+        NumberAxis xAxis = new NumberAxis();
+        xAxis.setTickUnit(1);
+        xAxis.setTickLabelFormatter(new StringConverter<>() {
             @Override
             public String toString(Number object) {
                 if(object.intValue()!=object.doubleValue())
@@ -137,9 +66,9 @@ public class MainSceneController {
                 return val.intValue();
             }
         });
-        conditionalsCount.setMinorTickVisible(false);
+        xAxis.setMinorTickVisible(false);
 
-        BarChart<Number, String> barChart = new BarChart<>(conditionalsCount, methodNames);
+        BarChart<Number, String> barChart = new BarChart<>(xAxis, yAxis);
         barChart.setTitle("Top 3 Most Complex Methods");
 
         XYChart.Series<Number, String> dataSeries = new XYChart.Series<>();
@@ -192,12 +121,7 @@ public class MainSceneController {
     }
 
     public TitledPane makeTitledPane() {
-        methodComplexityList.sort(Comparator.comparingInt(MethodComplexity::getTotalConditionalStatements).reversed());
-        List<MethodComplexity> topList = methodComplexityList.subList(3, methodComplexityList.size());
-        ObservableList<String> options = FXCollections.observableArrayList(
-                topList.stream()
-                        .map(MethodComplexity::getMethodName)
-                        .collect(Collectors.toList()));
+        ObservableList<String> options = FXCollections.observableArrayList(MethodComplexityListProvider.getNamesOfRemainingMethodsAfterTop3());
 
         ListView<String> listView = new ListView<>(options);
         listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
@@ -222,7 +146,7 @@ public class MainSceneController {
         return titledPane;
     }
 
-    public TableView<MethodComplexity> makeTable() {
+    public TableView<MethodComplexity> makeTableView() {
         TableView<MethodComplexity> tableView = new TableView<>();
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
         TableColumn<MethodComplexity, String> nameColumn = new TableColumn<>("Name");
@@ -255,7 +179,7 @@ public class MainSceneController {
 
                 // Add the dragged items to the TableView
                 // TODO methods with the same names will be added even if one is chosen
-                tableView.getItems().addAll(methodComplexityList.stream().filter(m -> draggedItems.contains(m.getMethodName())).toList());
+                tableView.getItems().addAll(MethodComplexityListProvider.getMethodsFilteredByName(draggedItems));
                 success = true;
             }
             event.setDropCompleted(success);
@@ -275,67 +199,4 @@ public class MainSceneController {
         return tableView;
     }
 
-    public Pane makeProgressCircle() {
-        Pane pane = new Pane();
-        // Create a circle representing the progress bar
-        Arc arc = new Arc(260, 350, 150, 150, 90, 180);
-        arc.setType(ArcType.OPEN);
-        arc.setStroke(Color.ORANGE);
-        arc.setStrokeWidth(15);
-        arc.setFill(null);
-        arc.lengthProperty().set(0);
-
-        System.out.println("Total: " + methodComplexityList.size());
-        System.out.println("Satisfied: " + methodComplexityList.stream().filter(MethodComplexity::isCamelCase).count());
-        double percentage = methodComplexityList.stream().filter(MethodComplexity::isCamelCase).count() * 1.0 / methodComplexityList.size() * 100;
-        double coverage = percentage * 360 / 100;
-        System.out.println("Coverage: " + coverage);
-//         Create a timeline animation to fill the arc
-        timeline = new Timeline(
-                new KeyFrame(Duration.ZERO, new KeyValue(arc.lengthProperty(), 0)),
-                new KeyFrame(Duration.seconds(2 ), new KeyValue(arc.lengthProperty(), coverage))
-        );
-
-        Label label = new Label(String.format("%.2f", percentage) + "%");
-        label.setFont(new Font(24));
-
-//        label.layoutBoundsProperty().addListener((obs, oldBounds, newBounds) -> {
-//            // Calculate label position based on the center of the arc
-//            double labelX = arc.getCenterX() - newBounds.getWidth() / 2;
-//            double labelY = arc.getCenterY() - newBounds.getHeight() / 2;
-//
-//            // Set label position
-//            label.setLayoutX(labelX);
-//            label.setLayoutY(labelY);
-//        });
-
-        // Position the label at the center of the arc
-        label.layoutXProperty().bind(arc.centerXProperty().subtract(label.widthProperty().divide(2)));
-        label.layoutYProperty().bind(arc.centerYProperty().subtract(label.heightProperty().divide(2)));
-
-
-        Label title = new Label("CamelCase Compliance");
-        title.setFont(new Font(30));
-        // Bind the label's layout X coordinate to the arc's centerX, subtracting half of the label's width
-        title.layoutXProperty().bind(arc.centerXProperty().subtract(title.widthProperty().divide(2)));
-
-        // Bind the label's layout Y coordinate to the arc's centerY, subtracting the arc's radiusY, the label's height, and an additional offset
-        double offset = 30; // Adjust this value to control the vertical spacing between the arc and the label
-        title.layoutYProperty().bind(arc.centerYProperty().subtract(arc.radiusYProperty()).subtract(title.heightProperty()).subtract(offset));
-
-        pane.getChildren().addAll(arc, label, title);
-
-        return pane;
-    }
-
-    public ListView<String> makeListView() {
-        return new ListView<>(FXCollections.observableArrayList(
-                methodComplexityList
-                        .stream().filter(m -> !m.isCamelCase())
-                        .map(m -> m.getMethodName() + "❗")
-                        .collect(Collectors.toList())));
-    }
-
-    public void badmethodLOL() {}
-    public void ReallyBadOne() {}
 }
