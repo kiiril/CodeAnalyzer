@@ -12,6 +12,10 @@ public class FileVisitor extends VoidVisitorAdapter<List<MethodComplexity>> {
         System.out.println("Analyzing: " + md.getName());
         MethodVisitor visitor = new MethodVisitor();
         MethodComplexity methodComplexity = new MethodComplexity(md.getClass().getSimpleName() + "." + md.getName().asString() + "()");
+        String camelCasePattern = "^[a-z][a-z0-9]*(([A-Z][a-z0-9]+)*[A-Z]?|([a-z0-9]+[A-Z])*|[A-Z])$";
+        if (md.getName().asString().matches(camelCasePattern)) {
+            methodComplexity.setCamelCase(true);
+        }
         md.accept(visitor, methodComplexity);
         methodComplexityList.add(methodComplexity);
     }

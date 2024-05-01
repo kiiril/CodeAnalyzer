@@ -1,0 +1,8 @@
+.chart-bar {
+    -fx-bar-fill: lightblue
+}
+
+/* specify the color for each pie */
+.data0.chart-pie {
+    -fx-pie-color: orange;
+}

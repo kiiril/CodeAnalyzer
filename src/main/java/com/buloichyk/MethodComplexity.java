@@ -7,6 +7,7 @@ public class MethodComplexity {
     private int switchStatements;
     private int forStatements;
     private int whileStatements;
+    private boolean isCamelCase;
 
     public MethodComplexity(String methodName) {
         this.methodName = methodName;
@@ -47,6 +48,14 @@ public class MethodComplexity {
 
     public String getMethodName() {
         return methodName;
+    }
+
+    public void setCamelCase(boolean camelCase) {
+        isCamelCase = camelCase;
+    }
+
+    public boolean isCamelCase() {
+        return isCamelCase;
     }
 
     @Override
