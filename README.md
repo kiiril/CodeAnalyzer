@@ -28,7 +28,7 @@ The MethodComplexityListProvider serves as a utility class that supplies data ab
 
 ## Demo
 
-
+https://github.com/kiiril/CodeAnalyzer/assets/119041402/c4f03224-c00c-424b-9c2c-0b122c9a2b6b
 
 ## Testing
 
