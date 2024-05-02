@@ -22,14 +22,13 @@ public class MethodComplexityListProvider {
                 List<Path> files = stream
                         .filter(file -> file.toString().endsWith(".java"))
                         .toList();
-                System.out.println(files);
                 for (Path file: files) {
                     CompilationUnit unit = StaticJavaParser.parse(file);
                     FileVisitor fileVisitor = new FileVisitor();
                     fileVisitor.visit(unit, methodComplexityList);
                 }
             } catch (IOException e) {
-                System.out.println("Exception");
+                System.out.println("Cannot open the directory: " + e);
             }
         }
     }

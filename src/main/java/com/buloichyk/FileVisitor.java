@@ -25,7 +25,6 @@ public class FileVisitor extends VoidVisitorAdapter<List<MethodComplexity>> {
     @Override
     public void visit(MethodDeclaration md, List<MethodComplexity> methodComplexityList) {
         super.visit(md, methodComplexityList);
-        System.out.println("Analyzing: " + md.getName());
 
         // get the class of the method
         ClassOrInterfaceDeclaration containingClass = md.findAncestor(ClassOrInterfaceDeclaration.class).orElse(null);

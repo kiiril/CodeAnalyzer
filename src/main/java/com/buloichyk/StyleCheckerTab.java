@@ -51,11 +51,8 @@ public class StyleCheckerTab extends Tab {
         arc.setFill(null);
         arc.lengthProperty().set(0);
 
-        System.out.println("Total: " + MethodComplexityListProvider.getMethodComplexityListSize());
-        System.out.println("Satisfied: " + MethodComplexityListProvider.getNumberOfMethodsWithCamelCaseNames());
         double percentage = MethodComplexityListProvider.getPercentageOfMethodsWithCamelCaseNames();
         double arcLength = percentage * 360 / 100;
-        System.out.println("Coverage: " + arcLength);
 
         // animation of fulfillment
         timeline = new Timeline(
