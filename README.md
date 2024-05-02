@@ -26,3 +26,10 @@ while the main scene hosts comprehensive visualizations based on the acquired me
 The MethodComplexity class functions as a data object, aggregating all metrics related to a method. 
 The MethodComplexityListProvider serves as a utility class that supplies data about all methods to be visualized.
 
+## Demo
+
+
+
+## Testing
+
+To conduct testing, you may use the /codebase directory from the resources.
