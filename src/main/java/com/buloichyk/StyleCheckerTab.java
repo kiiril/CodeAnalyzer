@@ -15,83 +15,73 @@ import javafx.scene.shape.ArcType;
 import javafx.scene.text.Font;
 import javafx.util.Duration;
 
-import java.util.stream.Collectors;
-
+/**
+* This class provides a graphical representation of code style analysis.
+* There are 2 main components:
+*   1. Autofill Circle -> represents the percentage of methods that follow CamelCase naming convention
+*   2. List -> displays names of methods that do not follow CamelCase naming convention
+**/
 public class StyleCheckerTab extends Tab {
     private Timeline timeline;
-
     public StyleCheckerTab() {
         super("Style Checker");
         HBox hBox = new HBox();
-        Pane progressCircle = makeProgressCircle();
+        
+        Pane complianceCircle = makeComplianceCircle();
         ListView<String> listView = makeListView();
 
-        progressCircle.prefWidthProperty().bind(hBox.widthProperty().divide(2));
+        // distribute tab width between components
+        complianceCircle.prefWidthProperty().bind(hBox.widthProperty().divide(2));
         listView.prefWidthProperty().bind(hBox.widthProperty().divide(2));
 
-        hBox.getChildren().addAll(progressCircle, listView);
+        hBox.getChildren().addAll(complianceCircle, listView);
 
         setContent(hBox);
-        setOnSelectionChanged(event -> {
-            timeline.play();
-        });
+        // play the animation when the user selects the tab
+        setOnSelectionChanged(event -> timeline.play());
         setClosable(false);
     }
 
-    public Pane makeProgressCircle() {
+    public Pane makeComplianceCircle() {
         Pane pane = new Pane();
-        // Create a circle representing the progress bar
         Arc arc = new Arc(260, 350, 150, 150, 90, 180);
         arc.setType(ArcType.OPEN);
-        arc.setStroke(Color.ORANGE);
+        arc.setStroke(Color.valueOf("#F7941D"));
         arc.setStrokeWidth(15);
         arc.setFill(null);
         arc.lengthProperty().set(0);
 
         System.out.println("Total: " + MethodComplexityListProvider.getMethodComplexityListSize());
-        System.out.println("Satisfied: " + MethodComplexityListProvider.getCountOfMethodsWithCamelCaseNames());
+        System.out.println("Satisfied: " + MethodComplexityListProvider.getNumberOfMethodsWithCamelCaseNames());
         double percentage = MethodComplexityListProvider.getPercentageOfMethodsWithCamelCaseNames();
-        double coverage = percentage * 360 / 100;
-        System.out.println("Coverage: " + coverage);
-//         Create a timeline animation to fill the arc
+        double arcLength = percentage * 360 / 100;
+        System.out.println("Coverage: " + arcLength);
+
+        // animation of fulfillment
         timeline = new Timeline(
                 new KeyFrame(Duration.ZERO, new KeyValue(arc.lengthProperty(), 0)),
-                new KeyFrame(Duration.seconds(2 ), new KeyValue(arc.lengthProperty(), coverage))
+                new KeyFrame(Duration.seconds(2), new KeyValue(arc.lengthProperty(), arcLength))
         );
 
-        Label label = new Label(String.format("%.2f", percentage) + "%");
-        label.setFont(new Font(24));
+        Label percentageLabel = new Label(String.format("%.2f", percentage) + "%");
+        percentageLabel.setFont(new Font(24));
 
-//        label.layoutBoundsProperty().addListener((obs, oldBounds, newBounds) -> {
-//            // Calculate label position based on the center of the arc
-//            double labelX = arc.getCenterX() - newBounds.getWidth() / 2;
-//            double labelY = arc.getCenterY() - newBounds.getHeight() / 2;
-//
-//            // Set label position
-//            label.setLayoutX(labelX);
-//            label.setLayoutY(labelY);
-//        });
-
-        // Position the label at the center of the arc
-        label.layoutXProperty().bind(arc.centerXProperty().subtract(label.widthProperty().divide(2)));
-        label.layoutYProperty().bind(arc.centerYProperty().subtract(label.heightProperty().divide(2)));
-
+        // position the label at the center of the arc
+        percentageLabel.layoutXProperty().bind(arc.centerXProperty().subtract(percentageLabel.widthProperty().divide(2)));
+        percentageLabel.layoutYProperty().bind(arc.centerYProperty().subtract(percentageLabel.heightProperty().divide(2)));
 
         Label title = new Label("CamelCase Compliance");
         title.setFont(new Font(30));
-        // Bind the label's layout X coordinate to the arc's centerX, subtracting half of the label's width
-        title.layoutXProperty().bind(arc.centerXProperty().subtract(title.widthProperty().divide(2)));
 
-        // Bind the label's layout Y coordinate to the arc's centerY, subtracting the arc's radiusY, the label's height, and an additional offset
-        double offset = 30; // Adjust this value to control the vertical spacing between the arc and the label
+        title.layoutXProperty().bind(arc.centerXProperty().subtract(title.widthProperty().divide(2)));
+        double offset = 30;
         title.layoutYProperty().bind(arc.centerYProperty().subtract(arc.radiusYProperty()).subtract(title.heightProperty()).subtract(offset));
 
-        pane.getChildren().addAll(arc, label, title);
+        pane.getChildren().addAll(arc, percentageLabel, title);
 
         return pane;
     }
 
-    // FIXME change this method
     public ListView<String> makeListView() {
         return new ListView<>(FXCollections.observableArrayList(
                 MethodComplexityListProvider.getMethodsWithNonCamelCaseNames().stream()

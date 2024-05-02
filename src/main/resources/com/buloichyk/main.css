@@ -2,9 +2,20 @@
     -fx-font-family: Verdana;
 }
 .chart-bar {
-    -fx-bar-fill: lightblue
+    -fx-bar-fill: #4D96FF;
 }
-/* specify the color for each pie */
 .data0.chart-pie {
-    -fx-pie-color: orange;
+    -fx-pie-color: #FF6B6B;
+}
+
+.data1.chart-pie {
+    -fx-pie-color: #FFD93D;
+}
+
+.data2.chart-pie {
+    -fx-pie-color: #6FCF97;
+}
+
+.data3.chart-pie {
+    -fx-pie-color: #BB6BD9;
 }

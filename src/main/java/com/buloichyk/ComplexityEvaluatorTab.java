@@ -2,7 +2,6 @@ package com.buloichyk;
 
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
 import javafx.geometry.VPos;
 import javafx.scene.chart.*;
 import javafx.scene.control.*;
@@ -14,6 +13,13 @@ import javafx.util.StringConverter;
 import java.util.ArrayList;
 import java.util.List;
 
+/** This class provides a graphical representation of complexity analysis.
+* There are 4 components:
+*   1. Bar Chart -> displays the top 3 most complex methods
+*   2. Pie Chart -> illustrates details of the most complex method (by default) or the selected bar
+*   3. Dropdown List -> enables method selection from the list for detailed analysis in the table
+*   4. Table -> presents detailed complexity metrics for the selected methods
+**/
 public class ComplexityEvaluatorTab extends Tab {
     private final GridPane gridPane;
     public ComplexityEvaluatorTab() {
@@ -26,7 +32,7 @@ public class ComplexityEvaluatorTab extends Tab {
 
         TitledPane titledPane = makeTitledPane();
         GridPane.setConstraints(titledPane, 0, 1);
-        // places the TitledPane at the top of the cell
+        // place the TitledPane at the top of the cell
         GridPane.setValignment(titledPane, VPos.TOP);
         gridPane.getChildren().add(titledPane);
 
@@ -39,13 +45,11 @@ public class ComplexityEvaluatorTab extends Tab {
     }
 
     public BarChart<Number, String> makeBarChart() {
-        // FIXME differentiate methods with same name
         List<MethodComplexity> topList = MethodComplexityListProvider.getTop3MostComplexMethods();
-        System.out.println(topList);
 
-        PieChart worst = makePieChart(topList.get(0));
-        GridPane.setConstraints(worst, 1, 0);
-        gridPane.getChildren().add(worst);
+        PieChart best = makePieChart(topList.get(0));
+        GridPane.setConstraints(best, 1, 0);
+        gridPane.getChildren().add(best);
 
         CategoryAxis yAxis = new CategoryAxis();
         yAxis.setCategories(FXCollections.observableArrayList(MethodComplexityListProvider.getNamesOfTop3MostComplexMethods()));
@@ -55,9 +59,9 @@ public class ComplexityEvaluatorTab extends Tab {
         xAxis.setTickLabelFormatter(new StringConverter<>() {
             @Override
             public String toString(Number object) {
-                if(object.intValue()!=object.doubleValue())
+                if (object.intValue() != object.doubleValue())
                     return "";
-                return ""+(object.intValue());
+                return "" + (object.intValue());
             }
 
             @Override
@@ -75,11 +79,11 @@ public class ComplexityEvaluatorTab extends Tab {
         for (MethodComplexity methodComplexity: topList) {
             XYChart.Data<Number, String> dataEntry = new XYChart.Data<>(methodComplexity.getTotalConditionalStatements(), methodComplexity.getMethodName());
 
+            // wait while node is available to access it
             dataEntry.nodeProperty().addListener((observable, oldValue, newValue) -> {
                 if (newValue != null) {
-                    // Wait while node is available to access it
                     dataEntry.getNode().setOnMouseClicked(mouseEvent -> {
-                        // remove pie chart of previous method
+                        // remove the pie chart of previously displayed method
                         gridPane.getChildren().removeIf(node -> node instanceof PieChart);
                         PieChart pieChart = makePieChart(methodComplexity);
                         GridPane.setConstraints(pieChart, 1, 0);
@@ -87,59 +91,57 @@ public class ComplexityEvaluatorTab extends Tab {
                     });
                 }
             });
-
             dataSeries.getData().add(dataEntry);
         }
         barChart.getData().add(dataSeries);
+
         return barChart;
     }
 
     public PieChart makePieChart(MethodComplexity methodComplexity) {
-        PieChart pieChart = new PieChart();
-
-        List<PieChart.Data> dataList = new ArrayList<>();
+        // prepare data for pie chart
+        List<PieChart.Data> data = new ArrayList<>();
+        String format = "%s (%d)";
         if (methodComplexity.getIfStatements() > 0) {
-            dataList.add(new PieChart.Data("IF", methodComplexity.getIfStatements()));
+            int ifStatements = methodComplexity.getIfStatements();
+            data.add(new PieChart.Data(String.format(format, "IF", ifStatements), ifStatements));
         }
         if (methodComplexity.getSwitchStatements() > 0) {
-            dataList.add(new PieChart.Data("SWITCH", methodComplexity.getSwitchStatements()));
+            int switchStatements = methodComplexity.getSwitchStatements();
+            data.add(new PieChart.Data(String.format(format, "SWITCH", switchStatements), switchStatements));
         }
         if (methodComplexity.getForStatements() > 0) {
-            dataList.add(new PieChart.Data("FOR", methodComplexity.getForStatements()));
+            int forStatements = methodComplexity.getForStatements();
+            data.add(new PieChart.Data(String.format(format, "FOR", forStatements), forStatements));
         }
         if (methodComplexity.getWhileStatements() > 0) {
-            dataList.add(new PieChart.Data("WHILE", methodComplexity.getWhileStatements()));
+            int whileStatements = methodComplexity.getWhileStatements();
+            data.add(new PieChart.Data(String.format(format, "WHILE", whileStatements), whileStatements));
         }
 
-        ObservableList<PieChart.Data> observableList = FXCollections.observableArrayList(dataList);
-        pieChart.setData(observableList);
-
-        pieChart.setTitle("Total: " + methodComplexity.getTotalConditionalStatements() + methodComplexity.getMethodName());
-
+        PieChart pieChart = new PieChart(FXCollections.observableArrayList(data));
+        pieChart.setTitle(methodComplexity.getMethodName());
         pieChart.setLabelLineLength(15);
+
         return pieChart;
     }
 
     public TitledPane makeTitledPane() {
-        ObservableList<String> options = FXCollections.observableArrayList(MethodComplexityListProvider.getNamesOfRemainingMethodsAfterTop3());
-
-        ListView<String> listView = new ListView<>(options);
+        ObservableList<String> allMethodsNames = FXCollections.observableArrayList(MethodComplexityListProvider.getNamesOfMethodsOrderedByDescendingComplexity());
+        ListView<String> listView = new ListView<>(allMethodsNames);
         listView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
 
+        // pack selected data for transfer
         listView.setOnDragDetected(event -> {
-            // Start the drag-and-drop gesture
             Dragboard dragboard = listView.startDragAndDrop(TransferMode.COPY);
-
-            // Put the selected items in the dragboard
             List<String> selectedItems = listView.getSelectionModel().getSelectedItems();
             ClipboardContent content = new ClipboardContent();
             content.put(DataFormat.PLAIN_TEXT, String.join("\n", selectedItems));
             dragboard.setContent(content);
-
             event.consume();
         });
 
-        TitledPane titledPane = new TitledPane("Others", listView);
+        TitledPane titledPane = new TitledPane("All methods", listView);
         titledPane.setCollapsible(true);
         titledPane.setExpanded(false);
 
@@ -149,9 +151,10 @@ public class ComplexityEvaluatorTab extends Tab {
     public TableView<MethodComplexity> makeTableView() {
         TableView<MethodComplexity> tableView = new TableView<>();
         tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_ALL_COLUMNS);
+        // prepare columns for the table
         TableColumn<MethodComplexity, String> nameColumn = new TableColumn<>("Name");
         nameColumn.setCellValueFactory(new PropertyValueFactory<>("methodName"));
-        // specify column width for name as 40%
+        // specify column width for name as 40% of the table width
         nameColumn.prefWidthProperty().bind(tableView.widthProperty().multiply(0.4));
         TableColumn<MethodComplexity, Integer> ifColumn = new TableColumn<>("IF");
         ifColumn.setCellValueFactory(new PropertyValueFactory<>("ifStatements"));
@@ -163,22 +166,18 @@ public class ComplexityEvaluatorTab extends Tab {
         whileColumn.setCellValueFactory(new PropertyValueFactory<>("whileStatements"));
 
         tableView.setOnDragOver(event -> {
-            // Check if the drag-and-drop gesture is over the TableView
             if (event.getGestureSource() != tableView && event.getDragboard().hasString()) {
                 event.acceptTransferModes(TransferMode.COPY);
             }
             event.consume();
         });
 
+        // add data to the table after user drop it
         tableView.setOnDragDropped(event -> {
             Dragboard dragboard = event.getDragboard();
             boolean success = false;
             if (dragboard.hasString()) {
-                // Extract the dragged items from the dragboard
                 List<String> draggedItems = List.of(dragboard.getString().split("\n"));
-
-                // Add the dragged items to the TableView
-                // TODO methods with the same names will be added even if one is chosen
                 tableView.getItems().addAll(MethodComplexityListProvider.getMethodsFilteredByName(draggedItems));
                 success = true;
             }
@@ -186,8 +185,8 @@ public class ComplexityEvaluatorTab extends Tab {
             event.consume();
         });
 
+        // allow selection of multiple rows and delete them using backspace
         tableView.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-
         tableView.setOnKeyPressed(keyEvent -> {
             if (keyEvent.getCode() == KeyCode.BACK_SPACE) {
                 tableView.getItems().removeAll(tableView.getSelectionModel().getSelectedItems());

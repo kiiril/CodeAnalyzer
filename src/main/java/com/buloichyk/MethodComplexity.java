@@ -1,8 +1,11 @@
 package com.buloichyk;
 
+/**
+ * This class represents a data object that accumulates necessary information about a method.
+ **/
+
 public class MethodComplexity {
-    private String methodName;
-//    private int totalConditionalStatements;
+    private final String methodName;
     private int ifStatements;
     private int switchStatements;
     private int forStatements;
@@ -56,16 +59,5 @@ public class MethodComplexity {
 
     public boolean isCamelCase() {
         return isCamelCase;
-    }
-
-    @Override
-    public String toString() {
-        return "MethodComplexity{" +
-                "methodName='" + methodName + '\'' +
-                ", ifStatements=" + ifStatements +
-                ", switchStatements=" + switchStatements +
-                ", forStatements=" + forStatements +
-                ", whileStatements=" + whileStatements +
-                '}';
     }
 }

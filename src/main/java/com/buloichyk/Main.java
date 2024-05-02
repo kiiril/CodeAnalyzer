@@ -1,8 +1,11 @@
 package com.buloichyk;
 
 import javafx.application.Application;
-import javafx.scene.text.Font;
 import javafx.stage.Stage;
+
+/**
+* This is the main class where the JavaFX application starts.
+**/
 public class Main extends Application {
     @Override
     public void start(Stage stage) {
